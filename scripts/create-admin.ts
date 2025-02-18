@@ -1,5 +1,8 @@
 const { PrismaClient } = require('@prisma/client')
-const bcrypt = require('bcrypt')
+const crypto = require('crypto')
+const util = require('util')
+
+const scrypt = util.promisify(crypto.scrypt)
 
 const prisma = new PrismaClient({
   datasources: {
@@ -9,11 +12,17 @@ const prisma = new PrismaClient({
   }
 })
 
+async function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString('hex')
+  const derivedKey = await scrypt(password, salt, 64)
+  return salt + ':' + derivedKey.toString('hex')
+}
+
 async function createAdmin() {
   try {
     const username = 'admin'
     const password = 'admin123'
-    const hashedPassword = await bcrypt.hash(password, 10)
+    const hashedPassword = await hashPassword(password)
 
     const admin = await prisma.admin.upsert({
       where: { username },

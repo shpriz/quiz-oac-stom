@@ -1,15 +1,24 @@
 import { NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
-import * as bcrypt from 'bcrypt'
+import crypto from 'crypto'
+import util from 'util'
+
+const scrypt = util.promisify(crypto.scrypt)
 
 const prisma = new PrismaClient()
+
+async function verifyPassword(password: string, hashedPassword: string) {
+  const [salt, key] = hashedPassword.split(':')
+  const derivedKey = await scrypt(password, salt, 64)
+  return key === derivedKey.toString('hex')
+}
 
 export async function POST(request: Request) {
   try {
     const { username, password } = await request.json()
 
     const admin = await prisma.admin.findUnique({
-      where: { username },
+      where: { username }
     })
 
     if (!admin) {
@@ -19,7 +28,7 @@ export async function POST(request: Request) {
       )
     }
 
-    const isValidPassword = await bcrypt.compare(password, admin.password)
+    const isValidPassword = await verifyPassword(password, admin.password)
 
     if (!isValidPassword) {
       return NextResponse.json(
@@ -32,7 +41,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Login error:', error)
     return NextResponse.json(
-      { error: 'Login failed' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }
