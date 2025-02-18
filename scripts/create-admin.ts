@@ -12,13 +12,13 @@ const prisma = new PrismaClient({
   }
 })
 
-async function hashPassword(password) {
+async function hashPassword(password: string): Promise<string> {
   const salt = randomBytes(16).toString('hex')
-  const derivedKey = await scrypt(password, salt, 64)
+  const derivedKey = (await scrypt(password, salt, 64)) as Buffer
   return salt + ':' + derivedKey.toString('hex')
 }
 
-async function createAdmin() {
+async function createAdmin(): Promise<void> {
   try {
     const username = 'admin'
     const password = 'admin123'
