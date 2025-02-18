@@ -34,7 +34,6 @@ RUN adduser --system --uid 1001 nextjs
 COPY package.json package-lock.json* ./
 RUN apk add --no-cache python3 make g++
 RUN npm ci --only=production
-RUN npm install argon2
 
 # Copy built files
 COPY --from=builder /app/public ./public
@@ -42,6 +41,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/scripts ./scripts
 
 USER nextjs
 

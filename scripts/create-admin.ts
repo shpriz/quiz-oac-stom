@@ -1,8 +1,8 @@
 const { PrismaClient } = require('@prisma/client')
-const crypto = require('crypto')
-const util = require('util')
+const { scrypt: _scrypt, randomBytes } = require('crypto')
+const { promisify } = require('util')
 
-const scrypt = util.promisify(crypto.scrypt)
+const scrypt = promisify(_scrypt)
 
 const prisma = new PrismaClient({
   datasources: {
@@ -13,7 +13,7 @@ const prisma = new PrismaClient({
 })
 
 async function hashPassword(password) {
-  const salt = crypto.randomBytes(16).toString('hex')
+  const salt = randomBytes(16).toString('hex')
   const derivedKey = await scrypt(password, salt, 64)
   return salt + ':' + derivedKey.toString('hex')
 }

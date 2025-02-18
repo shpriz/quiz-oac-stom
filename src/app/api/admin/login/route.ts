@@ -1,15 +1,15 @@
 import { NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
-import crypto from 'crypto'
-import util from 'util'
+import { scrypt as _scrypt } from 'crypto'
+import { promisify } from 'util'
 
-const scrypt = util.promisify(crypto.scrypt)
+const scrypt = promisify(_scrypt)
 
 const prisma = new PrismaClient()
 
-async function verifyPassword(password: string, hashedPassword: string) {
+async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
   const [salt, key] = hashedPassword.split(':')
-  const derivedKey = await scrypt(password, salt, 64)
+  const derivedKey = (await scrypt(password, salt, 64)) as Buffer
   return key === derivedKey.toString('hex')
 }
 
